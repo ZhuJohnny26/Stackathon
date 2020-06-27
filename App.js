@@ -12,8 +12,6 @@ import {
   Image,
 } from 'react-native';
 const Clarifai = require('clarifai');
-import favicon from './assets/favicon.png';
-import SelectImage from './SelectImage';
 
 class App extends React.Component {
   constructor() {
@@ -24,28 +22,13 @@ class App extends React.Component {
     this.state = {
       colorFinder: app,
       colors: [],
-      image: 'hi',
+      image:
+        'https://image.shutterstock.com/image-photo/white-transparent-leaf-on-mirror-260nw-1029171697.jpg',
     };
     this.handleClick = this.handleClick.bind(this);
-    this.handleChange = this.handleChange.bind(this);
-    // this.onTouch = this.onTouch.bind(this);
+    // this.handleChange = this.handleChange.bind(this);
   }
   async handleClick() {
-    // let pic =
-    // console.log(this.state.image);
-    // //   'https://image.shutterstock.com/image-photo/white-transparent-leaf-on-mirror-260nw-1029171697.jpg';
-    // let colors = await this.state.colorFinder.models.predict(
-    //   'eeed0b6733a644cea07cf4c60f87ebb7',
-    //   'https://image.shutterstock.com/image-photo/white-transparent-leaf-on-mirror-260nw-1029171697.jpg'
-    // );
-    // colors = colors.outputs[0].data.colors;
-
-    // console.log(colors[0].w3c.name);
-    // // await this.setState({ colors: picked, color, image: pic });
-
-    // await this.setState({ colors });
-
-    // let openImagePickerAsync = async () => {
     let permissionResult = await ImagePicker.requestCameraRollPermissionsAsync();
 
     if (permissionResult.granted === false) {
@@ -69,16 +52,11 @@ class App extends React.Component {
 
     if ((await this.state.image) !== null) {
       let picture = await this.state.image;
-      console.log(picture.slice(23));
-      console.log('Hello');
-      // console.log(this.state.remoteUri);
-      // console.log('https://anonymousfiles.io/f/blob_pGhFVPk');
-      //   'https://image.shutterstock.com/image-photo/white-transparent-leaf-on-mirror-260nw-1029171697.jpg';
       let colors = await this.state.colorFinder.models.predict(
         'eeed0b6733a644cea07cf4c60f87ebb7',
         picture.slice(23)
       );
-      console.log('hello');
+
       let picked = colors.outputs[0].data.colors;
       let color = picked[0];
       console.log(color.w3c.name);
@@ -86,32 +64,10 @@ class App extends React.Component {
     }
   }
 
-  handleChange(evt) {
-    this.setState({ [evt.target.name]: evt.target.value });
-  }
-  // async onTouch() {
-  //   let colors = await this.state.colorFinder.models.predict(
-  //     'eeed0b6733a644cea07cf4c60f87ebb7',
-  //     'https://image.shutterstock.com/image-photo/white-transparent-leaf-on-mirror-260nw-1029171697.jpg'
-  //   );
-  //   let picked = colors.outputs[0].data.colors;
-  //   let color = picked[0];
-  //   // console.log(color.w3c.name);
-  //   await this.setState({ color });
-  //   console.log(this.state.image);
-  // }
-
   render() {
-    // console.log(this.state.image);
     return (
       <View style={styles.container}>
-        <SelectImage image={this.state.image} />
         <Image source={{ uri: this.state.image }} style={styles.logo} />
-        {/* <TextInput
-          name="image"
-          onChange={this.handleChange}
-          placeholder="test"
-        ></TextInput> */}
         <Text>Text</Text>
 
         <View style={styles.colorContainer}>
@@ -136,15 +92,6 @@ class App extends React.Component {
             <Text style={{ fontSize: 20, color: '#fff' }}>Pick a photo</Text>
           </TouchableOpacity>
         </View>
-        {/* <View style={styles.colorContainer}>
-          <TouchableOpacity
-            onPress={this.onTouch}
-            style={{ backgroundColor: 'blue' }}
-          >
-            <Text style={{ fontSize: 20, color: '#fff' }}>Check colors</Text>
-          </TouchableOpacity>
-          <StatusBar style="auto" /> */}
-        {/* </View> */}
       </View>
     );
   }
