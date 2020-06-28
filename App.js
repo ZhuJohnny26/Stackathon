@@ -2,6 +2,7 @@ import { StatusBar } from 'expo-status-bar';
 import React from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import uploadToAnonymousFilesAsync from 'anonymous-files';
+import * as MediaLibrary from 'expo-media-library';
 import {
   StyleSheet,
   Platform,
@@ -14,6 +15,11 @@ const Clarifai = require('clarifai');
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as Permissions from 'expo-permissions';
 import { Camera } from 'expo-camera';
+import WebsiteView from './WebsiteView'
+import MobileView from './MobileView'
+
+console.log('test', WebsiteView)
+
 
 class App extends React.Component {
   constructor() {
@@ -27,6 +33,7 @@ class App extends React.Component {
       image:
         'https://image.shutterstock.com/image-photo/white-transparent-leaf-on-mirror-260nw-1029171697.jpg',
       hasPermission: null,
+      otherPermission: null,
       type: Camera.Constants.Type.back,
     };
     this.handleClick = this.handleClick.bind(this);
@@ -35,12 +42,14 @@ class App extends React.Component {
   }
   async clickToTakeAPic() {
     const { status } = await Permissions.askAsync(Permissions.CAMERA);
-    await this.setState({ hasPermission: status === 'granted' });
+    const {otherStatus} = await MediaLibrary.requestPermissionsAsync()
+    await this.setState({ hasPermission: status === 'granted'});
   }
 
   async takePicture() {
     if (this.camera) {
       let photo = await this.camera.takePictureAsync();
+      await MediaLibrary.saveToLibraryAsync(photo.uri)
       console.log(photo.uri);
       let data;
       let encoded;
@@ -100,7 +109,7 @@ class App extends React.Component {
         });
         data = encoded.base64;
       } else {
-        data = picture.slice(23);
+        data = picture.slice(22);
       }
 
       let colors = await this.state.colorFinder.models.predict(
@@ -113,108 +122,25 @@ class App extends React.Component {
 
       console.log(color.w3c.name);
       console.log(picked);
-      await this.setState({ colors: picked });
+      await this.setState({ colors: picked});
     }
   }
 
   render() {
     const { hasPermission } = this.state;
     if (hasPermission === null) {
-      return (
-        <View style={styles.veiw}>
-          <View style={styles.logo}>
-            <Image
-              source={{ uri: this.state.image }}
-              style={{
-                width: 500,
-                height: 400,
-                margin: 5,
-                padding: 2,
-              }}
-            />
-          </View>
-
-          <View style={styles.container}>
-            <Text
-              style={{
-                flex: 1,
-                width: 430,
-                height: 25,
-                backgroundColor: 'white',
-                margin: 10,
-
-                borderBottomColor: '#DBDED7',
-                borderBottomWidth: 0.5,
-              }}
-            >
-              Colors
-            </Text>
-            <View
-              style={{
-                flex: 5,
-                justifyContent: 'flex-start',
-                alignItems: 'center',
-                width: 430,
-                height: 400,
-                backgroundColor: '#E4EBDA',
-                margin: 10,
-                padding: 2,
-              }}
-            >
-              {this.state.colors.map((color) => (
-                <Text
-                  key={color.raw_hex}
-                  style={{
-                    textAlignVertical: 'center',
-                    width: 430,
-                    height: 35,
-                    backgroundColor: color.w3c.hex,
-                    margin: 2,
-                    borderRadius: 3,
-
-                    color: 'white',
-                  }}
-                >
-                  {color.w3c.name}, {color.w3c.hex}
-                </Text>
-              ))}
-            </View>
-            <TouchableOpacity
-              onPress={this.handleClick}
-              style={{
-                flex: 1,
-                justifyContent: 'center',
-                alignItems: 'center',
-                width: 430,
-                height: 20,
-                backgroundColor: 'blue',
-                margin: 10,
-                borderRadius: 3,
-              }}
-            >
-              <Text style={{ fontSize: 20, color: '#fff' }}>Pick a photo</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={this.clickToTakeAPic}
-              style={{
-                flex: 1,
-                justifyContent: 'center',
-                alignItems: 'center',
-                width: 430,
-                height: 20,
-                backgroundColor: 'blue',
-                margin: 10,
-                borderRadius: 3,
-              }}
-            >
-              <Text style={{ fontSize: 20, color: '#fff' }}>
-                Click to take a picture
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      );
+      //if we are on a website
+      if (Platform.OS === 'web'){
+        return (
+          <WebsiteView styles={styles} image={this.state.image} colors={this.state.colors} handleClick={this.handleClick} clickToTakeAPic={this.clickToTakeAPic}  />
+        );
+      }
+      else {
+        //if we arent on a website
+        return (
+          <MobileView image={this.state.image} colors={this.state.colors} handleClick={this.handleClick} clickToTakeAPic={this.clickToTakeAPic} />
+        )
+      }
     } else if (hasPermission === false) {
       return <Text>No access to camera</Text>;
     } else {
@@ -242,7 +168,7 @@ class App extends React.Component {
 }
 
 const styles = StyleSheet.create({
-  veiw: {
+  view: {
     flex: 1,
     flexDirection: 'row',
     width: 1400,
@@ -256,7 +182,7 @@ const styles = StyleSheet.create({
     height: 500,
     justifyContent: 'space-around',
     alignItems: 'flex-start',
-    backgroundColor: 'white',
+    backgroundColor: 'gray',
     marginLeft: 10,
   },
   logo: {
