@@ -1,13 +1,24 @@
 import React from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import uploadToAnonymousFilesAsync from 'anonymous-files';
-import { Platform, Text, View, TouchableOpacity, Image } from 'react-native';
+import * as MediaLibrary from 'expo-media-library';
+import {
+  StyleSheet,
+  Platform,
+  Text,
+  View,
+  TouchableOpacity,
+  Image,
+} from 'react-native';
 const Clarifai = require('clarifai');
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as Permissions from 'expo-permissions';
 import { Camera } from 'expo-camera';
-import { styles } from './style';
+import WebsiteView from './WebsiteView';
+import MobileView from './MobileView';
 import { defaultPicData } from './defualtPicData';
+
+console.log('test', WebsiteView);
 
 class App extends React.Component {
   constructor() {
@@ -21,6 +32,7 @@ class App extends React.Component {
       image:
         'https://image.shutterstock.com/image-photo/white-transparent-leaf-on-mirror-260nw-1029171697.jpg',
       hasPermission: null,
+      otherPermission: null,
       type: Camera.Constants.Type.back,
     };
     this.handleClick = this.handleClick.bind(this);
@@ -29,12 +41,19 @@ class App extends React.Component {
   }
   async clickToTakeAPic() {
     const { status } = await Permissions.askAsync(Permissions.CAMERA);
+    if (Platform.OS !== 'web') {
+      const { otherStatus } = await MediaLibrary.requestPermissionsAsync();
+    }
     await this.setState({ hasPermission: status === 'granted' });
   }
 
   async takePicture() {
+    console.log('>>>>>>>>>>>>>>');
     if (this.camera) {
       let photo = await this.camera.takePictureAsync();
+      if (Platform.OS !== 'web') {
+        await MediaLibrary.saveToLibraryAsync(photo.uri);
+      }
       console.log(photo.uri);
       let data;
       let encoded;
@@ -106,129 +125,35 @@ class App extends React.Component {
 
       let picked = colors.outputs[0].data.colors;
 
-      let allColors = picked.sort((a, b) => {
-        console.log(a.value, ' ', a);
-        return a.value - b.value;
-      });
-
-      console.log('>>>>>>: ', allColors);
-
-      await this.setState({ colors: allColors });
+      await this.setState({ colors: picked });
     }
   }
 
   render() {
     const { hasPermission } = this.state;
     if (hasPermission === null) {
-      return (
-        <View style={styles.veiw}>
-          <View style={styles.logo}>
-            <Image source={{ uri: this.state.image }} style={styles.image} />
-          </View>
-
-          <View style={styles.container}>
-            <Text style={styles.title}>Colors</Text>
-
-            <View style={styles.colors}>
-              {this.state.colors.map((color, idx) => {
-                let size = Math.round(color.value * 100);
-                let col = color.w3c.hex;
-                let colorHight = 0;
-                if (size <= 17) {
-                  colorHight = 10 + '%';
-                } else if (size > 17 && size <= 40) {
-                  colorHight = 15 + '%';
-                } else if (size > 40 && size <= 75) {
-                  colorHight = 18 + '%';
-                } else if (size > 75) {
-                  colorHight = 25 + '%';
-                }
-                size = size + '%';
-                const numbers = '012345';
-                const numbers1 = '0123';
-                const numbers2 = '678';
-
-                let one =
-                  numbers.includes(col[1]) &&
-                  numbers.includes(col[3]) &&
-                  numbers.includes(col[5]);
-                let two =
-                  numbers.includes(col[1]) &&
-                  numbers.includes(col[3]) &&
-                  numbers1.includes(col[5]);
-                let three =
-                  numbers2.includes(col[1]) &&
-                  numbers2.includes(col[3]) &&
-                  numbers.includes(col[5]);
-
-                let colorOfText = '';
-                if (one || two || three) colorOfText = 'white';
-                else colorOfText = 'black';
-                console.log('hello: ', color.value);
-
-                return (
-                  <View
-                    key={color.value}
-                    style={{
-                      flexDirection: 'row',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      width: 430,
-                      borderRadius: 4,
-                      marginBottom: 2,
-                      height: colorHight,
-                      backgroundColor: color.w3c.hex,
-                      borderColor: '#C3C3D1',
-                      borderWidth: 0.2,
-                    }}
-                  >
-                    <Text
-                      style={{
-                        fontSize: 11,
-                        fontWeight: 'bold',
-                        fontFamily: 'Verdana',
-                        marginLeft: 8,
-                        color: colorOfText,
-                      }}
-                    >
-                      {color.w3c.name} {color.w3c.hex}
-                    </Text>
-                    <Text
-                      style={{
-                        fontSize: 12,
-                        fontWeight: 'bold',
-                        fontFamily: 'Verdana',
-                        marginRight: 8,
-                        color: colorOfText,
-                      }}
-                    >
-                      {size}
-                    </Text>
-                  </View>
-                );
-              })}
-            </View>
-            <TouchableOpacity onPress={this.handleClick} style={styles.onClick}>
-              <Text
-                style={{ fontFamily: 'Verdana', fontSize: 20, color: '#fff' }}
-              >
-                Chose an image
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={this.clickToTakeAPic}
-              style={styles.onClick}
-            >
-              <Text
-                style={{ fontFamily: 'Verdana', fontSize: 20, color: '#fff' }}
-              >
-                Click to take a photo
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      );
+      //if we are on a website
+      if (Platform.OS === 'web') {
+        return (
+          <WebsiteView
+            styles={styles}
+            image={this.state.image}
+            colors={this.state.colors}
+            handleClick={this.handleClick}
+            clickToTakeAPic={this.clickToTakeAPic}
+          />
+        );
+      } else {
+        //if we arent on a website
+        return (
+          <MobileView
+            image={this.state.image}
+            colors={this.state.colors}
+            handleClick={this.handleClick}
+            clickToTakeAPic={this.clickToTakeAPic}
+          />
+        );
+      }
     } else if (hasPermission === false) {
       return <Text>No access to camera</Text>;
     } else {
@@ -236,25 +161,26 @@ class App extends React.Component {
         <View
           style={{
             flex: 1,
-            backgroundColor: '#DADDE8',
+            // backgroundColor: '#DADDE8',
           }}
         >
+          <Text>HELLO</Text>
           <Camera
             ref={(ref) => {
               this.camera = ref;
             }}
-            style={styles.camera}
+            // style={styles.camera}
             type={this.state.cameraType}
           />
           <TouchableOpacity
             onPress={this.takePicture}
-            style={styles.takePicture}
+            // style={styles.takePicture}
           >
             <Text
               style={{
                 fontFamily: 'Verdana',
                 fontSize: 20,
-                color: '#DEDFCD',
+                color: 'black',
               }}
             >
               Take a photo
@@ -265,5 +191,33 @@ class App extends React.Component {
     }
   }
 }
+
+const styles = StyleSheet.create({
+  view: {
+    flex: 1,
+    flexDirection: 'row',
+    width: 1400,
+    height: 500,
+    alignItems: 'center',
+    marginLeft: 30,
+  },
+  container: {
+    flex: 3,
+    width: 500,
+    height: 500,
+    justifyContent: 'space-around',
+    alignItems: 'flex-start',
+    backgroundColor: 'gray',
+    marginLeft: 10,
+  },
+  logo: {
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    flex: 6,
+    width: 400,
+    height: 500,
+    backgroundColor: '#212A40',
+  },
+});
 
 export default App;
