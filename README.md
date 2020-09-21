@@ -1,4 +1,4 @@
-# Stackathon
+# ColorFinder
 `git clone`
 `npm install`
 `npm start` <br />
