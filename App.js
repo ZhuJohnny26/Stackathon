@@ -1,4 +1,3 @@
-import { StatusBar } from 'expo-status-bar';
 import React from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import uploadToAnonymousFilesAsync from 'anonymous-files';
@@ -15,11 +14,12 @@ const Clarifai = require('clarifai');
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as Permissions from 'expo-permissions';
 import { Camera } from 'expo-camera';
-import WebsiteView from './WebsiteView'
-import MobileView from './MobileView'
+import WebsiteView from './WebsiteView';
+import MobileView from './MobileView';
+import { defaultPicData } from './defualtPicData';
+import {styling} from './style';
 
-console.log('test', WebsiteView)
-
+console.log('test', WebsiteView);
 
 class App extends React.Component {
   constructor() {
@@ -29,7 +29,7 @@ class App extends React.Component {
     });
     this.state = {
       colorFinder: app,
-      colors: [],
+      colors: defaultPicData,
       image:
         'https://image.shutterstock.com/image-photo/white-transparent-leaf-on-mirror-260nw-1029171697.jpg',
       hasPermission: null,
@@ -42,15 +42,20 @@ class App extends React.Component {
   }
   async clickToTakeAPic() {
     const { status } = await Permissions.askAsync(Permissions.CAMERA);
-    const {otherStatus} = await MediaLibrary.requestPermissionsAsync()
-    await this.setState({ hasPermission: status === 'granted'});
+    if (Platform.OS !== 'web') {
+      const { otherStatus } = await MediaLibrary.requestPermissionsAsync();
+    }
+    await this.setState({ hasPermission: status === 'granted' });
   }
 
   async takePicture() {
+    console.log('>>>>>>>>>>>>>>');
     if (this.camera) {
       let photo = await this.camera.takePictureAsync();
-      await MediaLibrary.saveToLibraryAsync(photo.uri)
-      console.log(photo.uri);
+      // if (Platform.OS !== 'web') {
+      //   await MediaLibrary.saveToLibraryAsync(photo.uri);
+      // }
+      // console.log(photo.uri);
       let data;
       let encoded;
       if (photo.uri.length < 500) {
@@ -67,13 +72,15 @@ class App extends React.Component {
       );
 
       let picked = colors.outputs[0].data.colors;
-      let color = picked[0];
-      console.log(color.w3c.name);
+      let allColors = picked.sort((a, b) => {
+        console.log(a.value, ' ', a);
+        return a.value - b.value;
+      });
 
       await this.setState({
         hasPermission: null,
         image: photo.uri,
-        colors: picked,
+        colors: allColors,
       });
     }
   }
@@ -109,7 +116,7 @@ class App extends React.Component {
         });
         data = encoded.base64;
       } else {
-        data = picture.slice(22);
+        data = picture.slice(23);
       }
 
       let colors = await this.state.colorFinder.models.predict(
@@ -118,11 +125,8 @@ class App extends React.Component {
       );
 
       let picked = colors.outputs[0].data.colors;
-      let color = picked[0];
 
-      console.log(color.w3c.name);
-      console.log(picked);
-      await this.setState({ colors: picked});
+      await this.setState({ colors: picked });
     }
   }
 
@@ -130,36 +134,53 @@ class App extends React.Component {
     const { hasPermission } = this.state;
     if (hasPermission === null) {
       //if we are on a website
-      if (Platform.OS === 'web'){
+      if (Platform.OS === 'web') {
         return (
-          <WebsiteView styles={styles} image={this.state.image} colors={this.state.colors} handleClick={this.handleClick} clickToTakeAPic={this.clickToTakeAPic}  />
+          <WebsiteView
+            styles={styles}
+            image={this.state.image}
+            colors={this.state.colors}
+            handleClick={this.handleClick}
+            clickToTakeAPic={this.clickToTakeAPic}
+          />
         );
-      }
-      else {
+      } else {
         //if we arent on a website
         return (
-          <MobileView image={this.state.image} colors={this.state.colors} handleClick={this.handleClick} clickToTakeAPic={this.clickToTakeAPic} />
-        )
+          <MobileView
+            image={this.state.image}
+            colors={this.state.colors}
+            handleClick={this.handleClick}
+            clickToTakeAPic={this.clickToTakeAPic}
+          />
+        );
       }
     } else if (hasPermission === false) {
       return <Text>No access to camera</Text>;
     } else {
       return (
-        <View style={{ flex: 1 }}>
+        <View
+          style={{
+            flex: 1,
+            alignItems: 'center',
+            justifyContent: 'space-around',
+          }}
+        >
+
           <Camera
             ref={(ref) => {
               this.camera = ref;
             }}
-            style={{ flex: 1 }}
-            type={this.state.cameraType}
+            style={styling.camera}
+            type={this.state.type}
           />
           <TouchableOpacity
             onPress={this.takePicture}
-            style={{ backgroundColor: 'blue' }}
+          
+            style={styling.takePicture}
           >
-            <Text style={{ fontSize: 20, color: '#fff' }}>
-              Click to take a picture
-            </Text>
+            <View style={{height: '90%', width: '85%', borderRadius: '50%', backgroundColor: 'white'}} />
+           
           </TouchableOpacity>
         </View>
       );
