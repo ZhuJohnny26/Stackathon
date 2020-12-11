@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-export const styles = StyleSheet.create({
+export const styling = StyleSheet.create({
   veiw: {
     flex: 1,
     flexDirection: 'row',
@@ -71,23 +71,25 @@ export const styles = StyleSheet.create({
     borderRadius: 3,
   },
   takePicture: {
-    flex: 1,
+    top: '80%',
+    position: 'absolute',
     justifyContent: 'center',
     alignItems: 'center',
-    height: 20,
-    width: 400,
-    marginLeft: 500,
-    borderRadius: 3,
+    height: '10%',
+    width: '23%',
+    borderWidth: 5,
+    borderColor: 'white',
+    borderRadius: 50,
     marginBottom: 20,
-    backgroundColor: '#0178FF',
+    marginTop: '1%',
+    backgroundColor: 'rgba(52, 52, 52, 0.1)',
   },
   camera: {
     flex: 9,
-    height: 800,
-    width: 1000,
-    marginLeft: 200,
-    marginTop: 20,
-    marginBottom: 20,
+    position: 'relative',
+    height: '100%',
+    width: '100%',
+    marginTop: '1%',
     borderRadius: 10,
   },
 });

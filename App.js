@@ -17,6 +17,7 @@ import { Camera } from 'expo-camera';
 import WebsiteView from './WebsiteView';
 import MobileView from './MobileView';
 import { defaultPicData } from './defualtPicData';
+import {styling} from './style';
 
 console.log('test', WebsiteView);
 
@@ -51,10 +52,10 @@ class App extends React.Component {
     console.log('>>>>>>>>>>>>>>');
     if (this.camera) {
       let photo = await this.camera.takePictureAsync();
-      if (Platform.OS !== 'web') {
-        await MediaLibrary.saveToLibraryAsync(photo.uri);
-      }
-      console.log(photo.uri);
+      // if (Platform.OS !== 'web') {
+      //   await MediaLibrary.saveToLibraryAsync(photo.uri);
+      // }
+      // console.log(photo.uri);
       let data;
       let encoded;
       if (photo.uri.length < 500) {
@@ -161,30 +162,25 @@ class App extends React.Component {
         <View
           style={{
             flex: 1,
-            // backgroundColor: '#DADDE8',
+            alignItems: 'center',
+            justifyContent: 'space-around',
           }}
         >
-          <Text>HELLO</Text>
+
           <Camera
             ref={(ref) => {
               this.camera = ref;
             }}
-            // style={styles.camera}
-            type={this.state.cameraType}
+            style={styling.camera}
+            type={this.state.type}
           />
           <TouchableOpacity
             onPress={this.takePicture}
-            // style={styles.takePicture}
+          
+            style={styling.takePicture}
           >
-            <Text
-              style={{
-                fontFamily: 'Verdana',
-                fontSize: 20,
-                color: 'black',
-              }}
-            >
-              Take a photo
-            </Text>
+            <View style={{height: '90%', width: '85%', borderRadius: '50%', backgroundColor: 'white'}} />
+           
           </TouchableOpacity>
         </View>
       );
